@@ -3,12 +3,18 @@ module Wiki
 		def self.process( text : String )
 			replacements = [] of String
 			finished = false
+			text = text.gsub(/<includeonly>.*?<\/includeonly>/m,"")
 			while !finished
 				finished = true
-				text = text.gsub(/\{\{[^\{\}]+\}\}/) {|m|
+				text = text.gsub(/\{\{\{[^\{\}]+\}\}\}/ ) {|t|
+					i = replacements.size
+					replacements.push(t)
+					"%%#{i}%%"
+				}
+				text = text.gsub(/\{\{[^\{\}]+\}\}/) {|t|
 					finished = false
 					i = replacements.size
-					replacements.push(parse_and_expand_instance(m,replacements))
+					replacements.push(parse_and_expand_instance(t,replacements))
 					"%%#{i}%%"
 				}
 			end
@@ -33,7 +39,6 @@ module Wiki
 
 			# TODO: get template for name
 			template = Wiki::Template.from_name( name )
-			#template = StringTemplate.new("{{{1}}}")
 
 			return template.expand( args )
 		end
@@ -64,11 +69,10 @@ module Wiki
 			if !(t=from_macro_name(name)).nil?
 				return t
 			end
-			if File.exists?(filename="template/#{name}.md") 
+			if File.exists?(filename="public/template/#{name}.md") 
 				return StringTemplate.new( File.read(filename) )
 			end
 			raise "Unable to find template #{name}"
-			#StringTemplate.new("{{{1}}}")
 		end
 		def self.from_macro_name( name : String ) : Template?
 			nil
@@ -80,6 +84,7 @@ module Wiki
 		end
 		def expand( args : Hash(String|Int32,String) ) : String
 			@text.gsub(/<noinclude>.*<\/noinclude>/m,"").
+			gsub(/<\/?includeonly>/,"").
 			gsub(/<!--.*?-->/m,"").
 			gsub(/\{\{\{([0-9 |]+)\}\}\}/) {|text,m|
 				default,key = if (k=m[1]).includes?("|")
