@@ -1,1 +1,1 @@
-<tr><td>CAS Number</td><td>{{{CAS Number|}}}</td></tr>
+<tr class="prop"><td>CAS Number</td><td>{{{CAS Number|}}}</td></tr>

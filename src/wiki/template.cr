@@ -63,7 +63,8 @@ module Wiki
 			return {template_name,args}
 		end
 
-		abstract def expand( args : Hash(String|Int32,String) ) : String
+		alias Arguments = Hash(String|Int32,String)
+		abstract def expand( args : Arguments ) : String
 
 		def self.from_name( name : String ) : Template
 			if !(t=from_macro_name(name)).nil?
@@ -74,15 +75,26 @@ module Wiki
 			end
 			raise "Unable to find template #{name}"
 		end
+
+		MACROS = %w( If IfEq Switch )
 		def self.from_macro_name( name : String ) : Template?
-			nil
+			{% begin %}
+				case name
+					{% for type in MACROS %}
+						when Wiki::Template::{{type.id}}::NAME
+							Wiki::Template::{{type.id}}.new()
+					{% end %}
+					else
+						nil
+				end
+			{% end %}
 		end
 	end
 
 	class StringTemplate < Template
 		def initialize( @text : String )
 		end
-		def expand( args : Hash(String|Int32,String) ) : String
+		def expand( args : Arguments ) : String
 			@text.gsub(/<noinclude>.*<\/noinclude>/m,"").
 			gsub(/<\/?includeonly>/,"").
 			gsub(/<!--.*?-->/m,"").
@@ -106,3 +118,5 @@ module Wiki
 		end
 	end
 end
+
+require "./template/*"
